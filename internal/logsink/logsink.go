@@ -195,7 +195,7 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		buf.Reset()
 	}
 
-	// Lmmdd hh:mm:ss.uuuuuu PID/GID file:line]
+	// [LEVEL] yyyy-mm-dd'T'hh:mm:ss.sss file:line (PID) msg
 	//
 	// The "PID" entry arguably ought to be TID for consistency with other
 	// environments, but TID is not meaningful in a Go program due to the
@@ -203,25 +203,27 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 	//
 	// Avoid Fprintf, for speed. The format is so simple that we can do it quickly by hand.
 	// It's worth about 3X. Fprintf is hard.
-	const severityChar = "IWEF"
-	buf.WriteByte(severityChar[m.Severity])
+    severityVal:= [] string{"INFOR","WARNI","ERROR","FATAL"}
+    buf.WriteByte('[')
+    buf.WriteString(severityVal[m.Severity])
+    buf.WriteString("] ")
 
-	_, month, day := m.Time.Date()
-	hour, minute, second := m.Time.Clock()
-	twoDigits(buf, int(month))
-	twoDigits(buf, day)
-	buf.WriteByte(' ')
-	twoDigits(buf, hour)
-	buf.WriteByte(':')
-	twoDigits(buf, minute)
-	buf.WriteByte(':')
-	twoDigits(buf, second)
-	buf.WriteByte('.')
-	nDigits(buf, 6, uint64(m.Time.Nanosecond()/1000), '0')
-	buf.WriteByte(' ')
-
-	nDigits(buf, 7, uint64(m.Thread), ' ')
-	buf.WriteByte(' ')
+	year, month, day := m.Time.Date()
+    hour, minute, second := m.Time.Clock()
+    nDigits(buf,4,uint64(year),' ')
+    buf.WriteByte('-')
+    twoDigits(buf, int(month))
+    buf.WriteByte('-')
+    twoDigits(buf, day)
+    buf.WriteByte('T')
+    twoDigits(buf, hour)
+    buf.WriteByte(':')
+    twoDigits(buf, minute)
+    buf.WriteByte(':')
+    twoDigits(buf, second)
+    buf.WriteByte('.')
+    nDigits(buf, 3, uint64(m.Time.Nanosecond()/1000000), '0')
+    buf.WriteByte(' ')
 
 	{
 		file := m.File
@@ -236,7 +238,9 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		var tmp [19]byte
 		buf.Write(strconv.AppendInt(tmp[:0], int64(m.Line), 10))
 	}
-	buf.WriteString("] ")
+    buf.WriteString(" (")
+    buf.WriteString(fmt.Sprintf("%v",m.Thread))
+    buf.WriteString(") ")
 
 	msgStart := buf.Len()
 	fmt.Fprintf(buf, format, args...)
