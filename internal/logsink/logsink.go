@@ -195,7 +195,7 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		buf.Reset()
 	}
 
-	// [LEVEL] yyyy-mm-dd'T'hh:mm:ss.sss file:line (PTD) msg
+	// [LEVEL] yyyy-mm-dd'T'hh:mm:ss.sss file:line (PID) msg
 	//
 	// The "PID" entry arguably ought to be TID for consistency with other
 	// environments, but TID is not meaningful in a Go program due to the
