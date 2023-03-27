@@ -239,7 +239,7 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		buf.Write(strconv.AppendInt(tmp[:0], int64(m.Line), 10))
 	}
 	buf.WriteString(" (")
-	buf.WriteString(fmt.Sprintf("%v",m.Thread))
+	nDigits(buf, 7, uint64(m.Thread), ' ')
 	buf.WriteString(") ")
 
 	msgStart := buf.Len()
