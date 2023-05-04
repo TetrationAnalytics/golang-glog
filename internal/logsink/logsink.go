@@ -203,7 +203,7 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 	//
 	// Avoid Fprintf, for speed. The format is so simple that we can do it quickly by hand.
 	// It's worth about 3X. Fprintf is hard.
-	severityVal:= [] string{"INFOR","WARNI","ERROR","FATAL"}
+	severityVal:= [] string{"INFO","WARN","ERROR","FATAL"}
 	buf.WriteByte('[')
 	buf.WriteString(severityVal[m.Severity])
 	buf.WriteString("] ")
