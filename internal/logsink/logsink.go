@@ -227,6 +227,7 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 
 	lineNumSize := numDigits(uint64(m.Line))
 	allowedFileNameSize := maxFileNameAndLineSize - lineNumSize - 1 // -1 for colon
+	fileNameSize := 0
 
 	{
 		file := m.File
@@ -235,8 +236,10 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		}
 		if len(file) > allowedFileNameSize {
 			buf.WriteString(file[:allowedFileNameSize])
+			fileNameSize = allowedFileNameSize
 		} else {
 			buf.WriteString(file)
+			fileNameSize = len(file)
 		}
 	}
 
@@ -245,8 +248,8 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		var tmp [19]byte
 		buf.Write(strconv.AppendInt(tmp[:0], int64(m.Line), 10))
 	}
-	if len(m.File)+1+lineNumSize < maxFileNameAndLineSize {
-		buf.Write(spaces[:maxFileNameAndLineSize-(len(m.File)+1+lineNumSize)])
+	if fileNameSize+1+lineNumSize < maxFileNameAndLineSize {
+		buf.Write(spaces[:maxFileNameAndLineSize-(fileNameSize+1+lineNumSize)])
 	}
 
 	buf.WriteString(" (")
