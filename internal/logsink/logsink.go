@@ -301,11 +301,12 @@ func twoDigits(buf *bytes.Buffer, d int) {
 }
 
 func numDigits(d uint64) int {
-	if d == 0 {
+	if d < 10 {
 		return 1
 	}
-	n := 0
-	for d > 0 {
+
+	n := 1
+	for d > 9 {
 		d /= 10
 		n++
 	}
