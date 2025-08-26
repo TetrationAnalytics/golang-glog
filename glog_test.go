@@ -108,7 +108,7 @@ func TestInfoDepth(t *testing.T) {
 	}
 
 	for i, m := range msgs {
-		if !strings.HasPrefix(m, "I") {
+		if !strings.HasPrefix(m, "[INFO]") {
 			t.Errorf("InfoDepth[%d] has wrong character: %q", i, m)
 		}
 		w := fmt.Sprintf("depth-test%d", i)
@@ -118,9 +118,9 @@ func TestInfoDepth(t *testing.T) {
 
 		// pull out the line number (between : and ])
 		msg := m[strings.LastIndex(m, ":")+1:]
-		x := strings.Index(msg, "]")
+		x := strings.Index(msg, " ")
 		if x < 0 {
-			t.Errorf("InfoDepth[%d]: missing ']': %q", i, m)
+			t.Errorf("InfoDepth[%d]: missing ' ': %q", i, m)
 			continue
 		}
 		line, err := strconv.Atoi(msg[:x])
@@ -178,9 +178,9 @@ func TestHeader(t *testing.T) {
 
 	Info("testHeader")
 	var line int
-	format := "I0102 15:04:05.067890 %7d glog_test.go:%d] testHeader\n"
+	format := "[INFO] 2006-01-02T15:04:05.067 glog_test.go:%d           (%7d) testHeader\n"
 	var gotPID int64
-	n, err := fmt.Sscanf(contents(logsink.Info), format, &gotPID, &line)
+	n, err := fmt.Sscanf(contents(logsink.Info), format, &line, &gotPID)
 	if n != 2 || err != nil {
 		t.Errorf("log format error: %d elements, error %s:\n%s", n, err, contents(logsink.Info))
 	}
@@ -191,7 +191,7 @@ func TestHeader(t *testing.T) {
 
 	// Scanf treats multiple spaces as equivalent to a single space,
 	// so check for correct space-padding also.
-	want := fmt.Sprintf(format, gotPID, line)
+	want := fmt.Sprintf(format, line, gotPID)
 	if contents(logsink.Info) != want {
 		t.Errorf("log format error: got:\n\t%q\nwant:\n\t%q", contents(logsink.Info), want)
 	}

@@ -203,14 +203,14 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 	//
 	// Avoid Fprintf, for speed. The format is so simple that we can do it quickly by hand.
 	// It's worth about 3X. Fprintf is hard.
-	severityVal:= [] string{"INFO","WARN","ERROR","FATAL"}
+	severityVal := []string{"INFO", "WARN", "ERROR", "FATAL"}
 	buf.WriteByte('[')
 	buf.WriteString(severityVal[m.Severity])
 	buf.WriteString("] ")
 
 	year, month, day := m.Time.Date()
 	hour, minute, second := m.Time.Clock()
-	nDigits(buf,4,uint64(year),' ')
+	nDigits(buf, 4, uint64(year), ' ')
 	buf.WriteByte('-')
 	twoDigits(buf, int(month))
 	buf.WriteByte('-')
@@ -225,12 +225,22 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 	nDigits(buf, 3, uint64(m.Time.Nanosecond()/1000000), '0')
 	buf.WriteByte(' ')
 
+	lineNumSize := numDigits(uint64(m.Line))
+	allowedFileNameSize := maxFileNameAndLineSize - lineNumSize - 1 // -1 for colon
+	fileNameSize := 0
+
 	{
 		file := m.File
 		if i := strings.LastIndex(file, "/"); i >= 0 {
 			file = file[i+1:]
 		}
-		buf.WriteString(file)
+		if len(file) > allowedFileNameSize {
+			buf.WriteString(file[:allowedFileNameSize])
+			fileNameSize = allowedFileNameSize
+		} else {
+			buf.WriteString(file)
+			fileNameSize = len(file)
+		}
 	}
 
 	buf.WriteByte(':')
@@ -238,6 +248,10 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 		var tmp [19]byte
 		buf.Write(strconv.AppendInt(tmp[:0], int64(m.Line), 10))
 	}
+	if fileNameSize+1+lineNumSize < maxFileNameAndLineSize {
+		buf.Write(spaces[:maxFileNameAndLineSize-(fileNameSize+1+lineNumSize)])
+	}
+
 	buf.WriteString(" (")
 	nDigits(buf, 7, uint64(m.Thread), ' ')
 	buf.WriteString(") ")
@@ -276,10 +290,27 @@ func textPrintf(m *Meta, textSinks []Text, format string, args ...any) (n int, e
 
 const digits = "0123456789"
 
+const maxFileNameAndLineSize = 26
+
+var spaces = []byte("                          ") // 26 spaces
+
 // twoDigits formats a zero-prefixed two-digit integer to buf.
 func twoDigits(buf *bytes.Buffer, d int) {
 	buf.WriteByte(digits[(d/10)%10])
 	buf.WriteByte(digits[d%10])
+}
+
+func numDigits(d uint64) int {
+	if d < 10 {
+		return 1
+	}
+
+	n := 1
+	for d > 9 {
+		d /= 10
+		n++
+	}
+	return n
 }
 
 // nDigits formats an n-digit integer to buf, padding with pad on the left. It
